@@ -6,8 +6,38 @@
     <script src="/javascripts/jquery-1.8.3.min.js"></script>
     <script src="/javascripts/bootstrap.js"></script>
     <script src='http://openlayers.org/dev/OpenLayers.js'></script>
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .sidebar-nav {
+        padding: 9px 0;
+      }
+    </style>
   </head>
   <body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+    <div class="navbar-inner">
+      <div class="container">
+        <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+          <span class="icon-bar"></span>
+        </a>
+        <a class="brand" href="#">Real-GIS</a>
+        <div class="nav-collapse collapse">
+          <ul class="nav">
+            <li id="home" class="active"><a href="/">Home</a></li>
+            <li id="properties"><a href="/properties/?">Properties</a></li>
+            <li><a href="#contact">Reports</a></li>
+            <li><a href="#customers">Cusomters</a></li>
+            <li><a href="#about">About</a></li>
+          </ul>
+        </div><!--/.nav-collapse -->
+      </div>
+    </div>
+  </div>
     <%- body %>
   </body>
 </html>

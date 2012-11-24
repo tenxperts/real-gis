@@ -22,6 +22,21 @@ exports.index = function(req, res){
   });
 };
 
+exports.properties = function(req, res){
+  var selectedLayout = req.query.layout;
+  fs.readdir('./data/', function (err, files) {
+    if (err) throw err;
+    var layouts = _.map(files,function(file){
+                        var name = file.substr(0,file.indexOf('.'));
+                        return { name: name.replace('-',' '), id: name}
+                      });
+    if (!selectedLayout) {
+      selectedLayout = layouts[0].id;
+    }
+    res.render('properties', { title: 'RealGIS', layouts: layouts, selectedLayout:  selectedLayout});
+  });
+};
+
 exports.layout = function(req, res) {
   var selectedLayout = req.params.layout;
   var layoutFile = selectedLayout.replace(' ','-') + '.json';

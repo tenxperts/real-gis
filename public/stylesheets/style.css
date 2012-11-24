@@ -4762,8 +4762,8 @@ body {
   padding-bottom: 40px;
 }
 #map {
-  height: 400px;
-  width: 80%;
+  height: 500px;
+  width: 100%;
   background-color: #eee;
 }
 /*!

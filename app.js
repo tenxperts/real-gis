@@ -42,6 +42,7 @@ express.compiler.compilers.less.compile = function(str, fn){
 // Routes
 
 app.get('/', routes.index);
+app.get('/properties/', routes.properties);
 app.get('/layouts/:layout/?', routes.layout);
 app.post('/layouts/:layout/plots/:id/?',routes.updatePlot)
 
