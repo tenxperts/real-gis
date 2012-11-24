@@ -1,0 +1,195 @@
+
+<div class="container">
+  <div class="row">
+    <div class="span2">
+     <div class="well sidebar-nav">
+        <ul class="nav nav-list">
+          <li class="nav-header">Layouts</li>
+          <% for(var i=0; i<layouts.length; i++) { %>
+              <% if (layouts[i].id == selectedLayout) { %>
+                  <li class="active">
+                    <%= layouts[i].name %>
+                  </li>  
+              <%} else {%>
+                <li>
+                  <a href='/properties/?layout=<%= layouts[i].id %>'>
+                      <%= layouts[i].name %>
+                  </a>
+                </li>
+              <%} %>
+          <% } %>
+          <li class="nav-header">Apartments</li>
+          <li class="nav-header">Villas</li>
+        </ul>
+      </div>  
+    </div>
+    <div class="span10">
+      <div>
+        <form class="form-inline">
+          <select id="filterSize" type="text" class="span3">
+            <option value="">Select Size</option>
+            <option value="30X40">30 X 40</option>
+            <option value="40X60">40 X 60</option>
+            <option value="80X100">80 X 100</option>
+          </select>
+          <select id="filterStatus" type="text" class="span3">
+            <option value="">Select Status</option>
+            <option value="vaccant">Vaccant</option>
+            <option value="blocked">Blocked</option>
+            <option value="toBeRegistered">To be registered</option>
+            <option value="registered">Registered</option>
+            <option value="notForSale">Not for sale</option>
+          </select>
+        </form>
+      </div>
+      <div id="map"></div>
+    </div>
+  </div>
+  <script type="text/javascript"> 
+
+    $(document).ready(function() {
+      $("#home").removeClass('active');
+      $("#properties").addClass('active');
+
+      var bounds = new OpenLayers.Bounds(
+        77.7015368008013, 12.7799785761317,
+        77.703011215732, 12.781264535432
+        );
+      var selectedLayout =   '<%=selectedLayout%>';
+      var map = new OpenLayers.Map("map",{allOverlays: true,maxExtent : bounds});
+      var osm = new OpenLayers.Layer.WMS( "OpenLayers WMS", 
+                    "http://vmap0.tiles.osgeo.org/wms/vmap0",
+                    {layers: 'basic'} );
+      var filterStrategy = new OpenLayers.Strategy.Filter();
+      var protocol = new OpenLayers.Protocol.HTTP({ 
+            url: '/layouts/' + selectedLayout, 
+            format: new OpenLayers.Format.GeoJSON() 
+        });
+      var vector = new OpenLayers.Layer.Vector("Boundaries",{
+        protocol: protocol, 
+        strategies: [new OpenLayers.Strategy.Fixed(),filterStrategy] 
+      });
+      map.addLayers([osm,vector]);
+      //map.addControl(new OpenLayers.Control.LayerSwitcher()); 
+      vector.events.on({
+        "loadend": function(event){
+          console.log(event.object.getDataExtent());
+          map.zoomToExtent(event.object.getDataExtent());
+      }});
+      var selectedFeature = null;
+      var selectControl = new OpenLayers.Control.SelectFeature(vector,{
+        onSelect: function(feature) {
+        selectedFeature = feature;
+        populatePlotDetails(feature.data);
+          $('#details').modal({})
+        },
+        onUnselect: function(feature) {
+          console.log("unselected: " + feature);
+        }});
+      map.addControl(selectControl);
+      selectControl.activate(); 
+
+      $("#close").click(function(){
+        $('#details').modal('hide');
+        selectControl.unselect(selectedFeature);
+      });
+
+      $("#save").click(function(){
+        selectedFeature.data.size = $('#size').val();
+        selectedFeature.data.area = $('#area').val();
+        selectedFeature.data.status = $('#status').val();
+        selectedFeature.data.owner = $('#owner').val();
+        console.log(selectedFeature.data);
+        $.ajax({
+          type: 'POST',
+          contentType: "application/json; charset=utf-8",
+          url: "/layouts/" + selectedLayout + "/plots/" + selectedFeature.data.id,
+          data: JSON.stringify(selectedFeature.data),
+          success: function(){
+            $("#operation-status")
+              .text("Saved successfully")
+              .show()
+              .delay(3000)
+              .fadeOut("slow",function(){
+              $("#operation-status").text('');
+            });
+          }
+          }); 
+      })
+
+      $("#filterSize").change(applyFilter);
+      $("#filterStatus").change(applyFilter);
+
+      function applyFilter() {
+        var selectedSize =  $("#filterSize").val();
+        var selectedStatus = $("#filterStatus").val();
+        console.log("Applying " + selectedSize + " , " + selectedStatus);
+
+        var filters = [];
+        if (selectedStatus) {
+          filters.push(new OpenLayers.Filter.Comparison({
+            type: OpenLayers.Filter.Comparison.EQUAL_TO,
+            property: 'status',
+            value: selectedStatus}));                    
+        }
+
+        if (selectedSize) {
+          filters.push(new OpenLayers.Filter.Comparison({
+            type: OpenLayers.Filter.Comparison.EQUAL_TO,
+            property: 'size',
+            value: selectedSize}));                    
+        }
+        console.log(filters);
+        filterStrategy.setFilter(new OpenLayers.Filter.Logical({
+          type: OpenLayers.Filter.Logical.AND,
+          filters: filters})) ;
+      }
+
+      function populatePlotDetails(data){
+        $('#size').val(data.size || "30X40");
+        $('#area').val(data.area);
+        console.log(data.status);
+        $('#status').val(data.status || "vaccant" );
+        $('#owner').val(data.owner || "");
+      }
+    });
+
+  </script>
+</div>
+<div id="details" class="modal hide fade">
+  <div class="modal-header">
+    <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+    <h3>Plot Details</h3>
+  </div>
+  <div class="modal-body">
+    <div id="operation-status" class="hide alert alert-success"></div>
+    <form class="site-details">
+      <label>Dimension:</label>
+      <select id="size" type="text" class="span3">
+        <option value="30x40">30 X 40</option>
+        <option value="40X60">40 X 60</option>
+        <option value="80X100">80 X 100</option>
+      </select>
+      <span class="help-inline">Site dimension in sq. ft.!</span>
+      <label>Area:</label>
+      <input id="area" type="text" class="span3" placeholder="Site Area..">
+      <span class="help-inline">Area of the site!</span>
+      <label>Status:</label>
+      <select id="status" type="text" class="span3">
+        <option value="vaccant">Vaccant</option>
+        <option value="blocked">Blocked</option>
+        <option value="toBeRegistered">To be registered</option>
+        <option value="registered">Registered</option>
+        <option value="notForSale">Not for sale</option>
+      </select>
+      <span class="help-inline">Current status?!</span>
+      <label>Owner:</label>
+      <input id="owner" type="text" class="span3" placeholder="Owner">
+      <span class="help-inline">Owner of the site!</span>
+    </form>
+  </div>
+  <div class="modal-footer">
+    <a id="close" href="#" class="btn">Close</a>
+    <a id="save" href="#" class="btn btn-primary">Save changes</a>
+  </div>
+</div>
