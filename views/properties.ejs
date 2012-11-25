@@ -26,12 +26,6 @@
     <div class="span10">
       <div>
         <form class="form-inline">
-          <select id="filterSize" type="text" class="span3">
-            <option value="">Select Size</option>
-            <option value="30X40">30 X 40</option>
-            <option value="40X60">40 X 60</option>
-            <option value="80X100">80 X 100</option>
-          </select>
           <select id="filterStatus" type="text" class="span3">
             <option value="">Select Status</option>
             <option value="vaccant">Vaccant</option>
@@ -39,6 +33,19 @@
             <option value="toBeRegistered">To be registered</option>
             <option value="registered">Registered</option>
             <option value="notForSale">Not for sale</option>
+          </select>
+          <select id="filterDirection" type="text" class="span3">
+            <option value="">Select Direction</option>
+            <option value="north">North</option>
+            <option value="south">South</option>
+            <option value="east">East</option>
+            <option value="west">West</option>
+          </select>
+          <select id="filterSize" type="text" class="span3">
+            <option value="">Select Size</option>
+            <option value="30X40">30 X 40</option>
+            <option value="40X60">40 X 60</option>
+            <option value="80X100">80 X 100</option>
           </select>
         </form>
       </div>
@@ -51,15 +58,22 @@
       $("#home").removeClass('active');
       $("#properties").addClass('active');
 
-      var bounds = new OpenLayers.Bounds(
-        77.7015368008013, 12.7799785761317,
-        77.703011215732, 12.781264535432
-        );
       var selectedLayout =   '<%=selectedLayout%>';
-      var map = new OpenLayers.Map("map",{allOverlays: true,maxExtent : bounds});
-      var osm = new OpenLayers.Layer.WMS( "OpenLayers WMS", 
-                    "http://vmap0.tiles.osgeo.org/wms/vmap0",
-                    {layers: 'basic'} );
+      var map = new OpenLayers.Map("map",{allOverlays: true});
+      var streets = new OpenLayers.Layer.Google("Google Streets", { 
+        numZoomLevels: 30 
+      }); 
+      var physical = new OpenLayers.Layer.Google("Google Physical", { 
+          type: google.maps.MapTypeId.TERRAIN 
+      }); 
+      var hybrid= new OpenLayers.Layer.Google("Google Hybrid", { 
+          type: google.maps.MapTypeId.HYBRID, numZoomLevels: 30 
+      }); 
+      var satellite = new OpenLayers.Layer.Google("Google Satellite", { 
+          type: google.maps.MapTypeId.SATELLITE, numZoomLevels: 30 
+      }); 
+      map.addLayers([streets, hybrid]); 
+
       var filterStrategy = new OpenLayers.Strategy.Filter();
       var protocol = new OpenLayers.Protocol.HTTP({ 
             url: '/layouts/' + selectedLayout, 
@@ -69,8 +83,9 @@
         protocol: protocol, 
         strategies: [new OpenLayers.Strategy.Fixed(),filterStrategy] 
       });
-      map.addLayers([osm,vector]);
-      //map.addControl(new OpenLayers.Control.LayerSwitcher()); 
+      map.addLayer(vector);
+      map.addControl(new OpenLayers.Control.LayerSwitcher()); 
+      
       vector.events.on({
         "loadend": function(event){
           console.log(event.object.getDataExtent());
@@ -99,6 +114,7 @@
         selectedFeature.data.area = $('#area').val();
         selectedFeature.data.status = $('#status').val();
         selectedFeature.data.owner = $('#owner').val();
+        selectedFeature.data.direction = $('#direction').val();
         console.log(selectedFeature.data);
         $.ajax({
           type: 'POST',
@@ -119,11 +135,13 @@
 
       $("#filterSize").change(applyFilter);
       $("#filterStatus").change(applyFilter);
+      $("#filterDirection").change(applyFilter);
 
       function applyFilter() {
         var selectedSize =  $("#filterSize").val();
         var selectedStatus = $("#filterStatus").val();
-        console.log("Applying " + selectedSize + " , " + selectedStatus);
+        var selectedDirection = $("#filterDirection").val();
+        console.log("Applying " + selectedSize + " , " + selectedStatus + ", " + selectedDirection);
 
         var filters = [];
         if (selectedStatus) {
@@ -139,6 +157,13 @@
             property: 'size',
             value: selectedSize}));                    
         }
+
+        if (selectedDirection) {
+          filters.push(new OpenLayers.Filter.Comparison({
+            type: OpenLayers.Filter.Comparison.EQUAL_TO,
+            property: 'direction',
+            value: selectedDirection}));                    
+        }
         console.log(filters);
         filterStrategy.setFilter(new OpenLayers.Filter.Logical({
           type: OpenLayers.Filter.Logical.AND,
@@ -148,9 +173,10 @@
       function populatePlotDetails(data){
         $('#size').val(data.size || "30X40");
         $('#area').val(data.area);
-        console.log(data.status);
         $('#status').val(data.status || "vaccant" );
         $('#owner').val(data.owner || "");
+        $('#direction').val(data.direction || "");
+        console.log(data.direction);
       }
     });
 
@@ -170,7 +196,17 @@
         <option value="40X60">40 X 60</option>
         <option value="80X100">80 X 100</option>
       </select>
-      <span class="help-inline">Site dimension in sq. ft.!</span>
+      <span class="help-inline">Site dimension in ft.</span>
+      
+      <label>Direction:</label>
+      <select id="direction" type="text" class="span3">
+        <option value="north">North</option>
+        <option value="south">South</option>
+        <option value="east">East</option>
+        <option value="west">West</option>
+      </select>
+      <span class="help-inline">Facing direction</span>
+
       <label>Area:</label>
       <input id="area" type="text" class="span3" placeholder="Site Area..">
       <span class="help-inline">Area of the site!</span>
@@ -193,3 +229,5 @@
     <a id="save" href="#" class="btn btn-primary">Save changes</a>
   </div>
 </div>
+
+<script type="text/javascript" src="http://maps.google.com/maps/api/js?v=3.5&sensor=false"></script>

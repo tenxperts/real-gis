@@ -8,6 +8,7 @@ mongoose.connect('mongodb://localhost/real-gis');
 var layoutSchema = new Schema({
     _id : String,
     name: String,
+    bounds: []
 });
 
 var plotSchema = new Schema({
