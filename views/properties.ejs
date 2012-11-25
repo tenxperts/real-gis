@@ -26,7 +26,7 @@
     <div class="span10">
       <div>
         <form class="form-inline">
-          <select id="filterStatus" type="text" class="span3">
+          <select id="filterStatus" type="text" class="span2">
             <option value="">Select Status</option>
             <option value="vaccant">Vaccant</option>
             <option value="blocked">Blocked</option>
@@ -34,19 +34,20 @@
             <option value="registered">Registered</option>
             <option value="notForSale">Not for sale</option>
           </select>
-          <select id="filterDirection" type="text" class="span3">
+          <select id="filterDirection" type="text" class="span2">
             <option value="">Select Direction</option>
             <option value="north">North</option>
             <option value="south">South</option>
             <option value="east">East</option>
             <option value="west">West</option>
           </select>
-          <select id="filterSize" type="text" class="span3">
+          <select id="filterSize" type="text" class="span2">
             <option value="">Select Size</option>
             <option value="30X40">30 X 40</option>
             <option value="40X60">40 X 60</option>
             <option value="80X100">80 X 100</option>
           </select>
+          <input id="filderClientManager" type="test" class="span3" placeholder="Client Manager"/>
         </form>
       </div>
       <div id="map"></div>
@@ -114,6 +115,7 @@
         selectedFeature.data.area = $('#area').val();
         selectedFeature.data.status = $('#status').val();
         selectedFeature.data.owner = $('#owner').val();
+        selectedFeature.data.clientManager = $('#clientManager').val();
         selectedFeature.data.direction = $('#direction').val();
         console.log(selectedFeature.data);
         $.ajax({
@@ -175,6 +177,7 @@
         $('#area').val(data.area);
         $('#status').val(data.status || "vaccant" );
         $('#owner').val(data.owner || "");
+        $('#clientManager').val(data.clientManager || "");
         $('#direction').val(data.direction || "");
         console.log(data.direction);
       }
@@ -222,6 +225,9 @@
       <label>Owner:</label>
       <input id="owner" type="text" class="span3" placeholder="Owner">
       <span class="help-inline">Owner of the site!</span>
+      <label>Client Manager:</label>
+      <input id="clientManager" type="text" class="span3" placeholder="Client Manager">
+      <span class="help-inline">Client Manager!</span>
     </form>
   </div>
   <div class="modal-footer">
