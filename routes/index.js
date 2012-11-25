@@ -2,6 +2,7 @@
 var fs    = require('fs');
 var _     = require('underscore');
 var async = require('async');
+var models = require('../models');
 /*
  * GET home page.
  */
@@ -23,12 +24,8 @@ exports.index = function(req, res){
 
 exports.properties = function(req, res){
   var selectedLayout = req.query.layout;
-  fs.readdir('./data/', function (err, files) {
+  models.Layout.find(function(err,layouts){
     if (err) throw err;
-    var layouts = _.map(files,function(file){
-                        var name = file.substr(0,file.indexOf('.'));
-                        return { name: name.replace('-',' '), id: name}
-                      });
     if (!selectedLayout) {
       selectedLayout = layouts[0].id;
     }
