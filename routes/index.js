@@ -10,7 +10,6 @@ exports.index = function(req, res){
   var selectedLayout = req.query.layout;
   fs.readdir('./data/', function (err, files) {
     if (err) throw err;
-    console.log('stats: ' + JSON.stringify(files));
     var layouts = _.map(files,function(file){
                         var name = file.substr(0,file.indexOf('.'));
                         return { name: name.replace('-',' '), id: name}
